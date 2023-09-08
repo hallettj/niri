@@ -61,6 +61,10 @@
           in
           lib.cleanSourceWith { inherit filter; src = craneLib.path ./.; };
 
+        buildEnvVars = {
+          LIBCLANG_PATH = "${pkgs.clang.cc.lib}/lib";
+        };
+
         # Common arguments can be set here to avoid repeating them later
         commonArgs = {
           inherit src;
@@ -69,11 +73,13 @@
             pkg-config
           ];
 
-          buildInputs = pkgs.wlroots.buildInputs;
+          buildInputs = with pkgs; wlroots.buildInputs ++ [
+            pipewire
+          ];
 
           # Additional environment variables can be set directly
           # MY_CUSTOM_VAR = "some value";
-        };
+        } // buildEnvVars;
 
         # Build *just* the cargo dependencies, so we can reuse
         # all of that work (e.g. via cachix) when running in CI
@@ -139,7 +145,7 @@
           drv = niri;
         };
 
-        devShells.default = craneLib.devShell {
+        devShells.default = craneLib.devShell ({
           # Inherit inputs from checks.
           checks = self.checks.${system};
 
@@ -150,6 +156,6 @@
           packages = [
             # pkgs.ripgrep
           ];
-        };
+        } // buildEnvVars);
       });
 }
